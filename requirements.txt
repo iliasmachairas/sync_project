@@ -1,0 +1,6 @@
+pathlib
+pandas
+geopandas
+plotly
+openpyxl
+streamlit
