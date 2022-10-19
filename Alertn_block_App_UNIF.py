@@ -12,6 +12,9 @@ import datetime
 #from io import BytesIO
 import numpy as np
 import geopandas as gpd
+import matplotlib.pyplot as plt
+import matplotlib
+from PIL import Image
 
 import openpyxl
 from openpyxl import Workbook, load_workbook
@@ -54,7 +57,7 @@ with col2:
      # select storm duration
     storm_dur_options = np.arange(1,37,1)
     selected_storm_dur = st.selectbox(label='Select storm duration (h)',
-                                options=storm_dur_options)
+                                options=storm_dur_options, index=5)
     
     # M ap creation
     
@@ -171,10 +174,15 @@ with col3:
     
     #atltern_df = pd.DataFrame(atltern_array, index=np.arange(1,rain_steps_df_sorted.shape[0]+1,1), columns= ['precip'])
     atltern_ar_merge = np.column_stack((atltern_array, timesteps_min))
-    atltern_df = pd.DataFrame(atltern_ar_merge, index=t, columns= ['precip', 'time_ste_h'])
-    atltern_excel = atltern_df.to_excel('Alternating_block_method_app.xlsx', float_format='%.2f')
+    atltern_df = pd.DataFrame(atltern_ar_merge, index=t, columns= ['precip (mm)','time_step (min)'])
+    cols = ['time_step (min)','precip (mm)',]
+    atltern_df = atltern_df[cols]
+    atltern_excel = atltern_df.to_excel('Alternating_block_method_app.xlsx',
+                                        float_format='%.2f',
+                                       index_label='time step (h)')
     
     # Export to excel
+    #columns=['col1', 'col3']
     
     
 with col4:
@@ -182,7 +190,8 @@ with col4:
     # Show plot
     fig_Altern = go.Figure(layout=go.Layout(
         title=go.layout.Title(text="Alternating block method ")))
-    fig_Altern.add_scatter(x=atltern_df.index, y=atltern_df.precip,
+    
+    fig_Altern.add_bar(x=atltern_df.index, y=atltern_df['precip (mm)'],
                            name='T='+str(selected_T))
 
     fig_Altern.update_layout(
@@ -191,6 +200,36 @@ with col4:
         width=400, height=350)
     
     st.plotly_chart(fig_Altern, use_container_width=True)
+    
+    # Image plot
+    matplotlib.rcParams.update({'font.size': 16})
+    
+    plt.figure(figsize=(14,10))
+    plt.bar(atltern_df.index, atltern_df['precip (mm)'], width=0.2)
+    plt.xlabel('Duration (h)')
+    plt.ylabel('Rainfall (mm)')
+    plt.title('Hyetograph')
+    plt.savefig('Hydrograph_barplot.png')
+    
+    # -----  It was not necesssary to use it  ----
+    #img = Image.open('Hydrograph_barplot.png')
+    # from io import BytesIO
+    # buf = BytesIO()
+    # img.save(buf, format="JPEG")
+    # byte_im = buf.getvalue()
+    
+    # --- Image with IDF_curves - 4 periods
+    periods = [10, 25, 50, 100]
+    d2 = np.linspace(0,16,100)
+    plt.figure(figsize=(14,10))
+    for i in periods:
+        y_i = rain_intens_v(i,d2)
+        plt.plot(d2, y_i, label='T'+str(i))
+    plt.xlabel('Duration (h)')
+    plt.ylabel('Rainfall intensity (mm/h)')
+    plt.title('IDF Curves - Station: '+str(name))
+    plt.legend()
+    plt.savefig('IDF_curves.png')
     
     
     # Excel output configuration
@@ -214,9 +253,14 @@ with col4:
     for j in range(1,4):
         for i in range(1,max_row+1):
             ws.cell(column=j, row=i).border = thin_border
-            ws.cell(column=j, row=i).alignment = Alignment(horizontal='center')
+            if j==3:
+                ws.cell(column=j, row=i).alignment = Alignment(horizontal='right')
+            else:
+                 ws.cell(column=j, row=i).alignment = Alignment(horizontal='center')
     
     ws.merge_cells('D4:E4')
+    ws.merge_cells('D5:E5')
+    ws['D4'].alignment = Alignment(horizontal='center')
     
     # Descriptive statitsics
     ws['G2'] = 'Descriptive Statistics'
@@ -232,15 +276,18 @@ with col4:
         cell.font = Font(bold=True)
         
     # Descriptive stats
-    ws['H3'].value = round(atltern_df.precip.min(),2)
-    ws['H4'].value = round(atltern_df.precip.max(),2)
-    ws['H5'].value = round(atltern_df.precip.mean(),2)
-    ws['H6'].value = round(np.std(atltern_df.precip),2)
+    ws['H3'].value = round(atltern_df['precip (mm)'].min(),2)
+    ws['H4'].value = round(atltern_df['precip (mm)'].max(),2)
+    ws['H5'].value = round(atltern_df['precip (mm)'].mean(),2)
+    ws['H6'].value = round(np.std(atltern_df['precip (mm)']),2)
+    
+    for row in range(3, 7):
+        ws["H{}".format(row)].number_format = '#,##0.00'
     
     # Number format
-    rows = 26
-    for row in range(1, rows):
-        ws["B{}".format(row)].number_format = '#,##0.00'
+    for row in range(1, max_row+1):
+        ws["A{}".format(row)].number_format = '#,##0.00'
+        ws["C{}".format(row)].number_format = '#,##0.00'
     
     # Adjusting column width size
     column_widths = []
@@ -252,17 +299,17 @@ with col4:
                 column_widths.append(len(str(cell.value)))
     
     for i, column_width in enumerate(column_widths):
-        wb['Alternating_block'].column_dimensions[get_column_letter(i + 1)].width = column_width    
+        wb['Alternating_block'].column_dimensions[get_column_letter(i + 1)].width = column_width  + 5 
     
     
 
     
 # Creating a barchart
     chart1 = BarChart()
-    data = Reference(ws, min_col = 2, min_row = 1, max_row = max_row) # You need to include the name of the column as well
+    data = Reference(ws, min_col = 3, min_row = 2, max_row = max_row) # You need to include the name of the column as well
     # besides the data
-    cats = Reference(ws, min_col = 1, min_row = 2, max_row = max_row)
-    chart1.add_data(data, titles_from_data=True)
+    cats = Reference(ws, min_col = 1, min_row = 3, max_row = max_row)
+    chart1.add_data(data, titles_from_data=False)
     chart1.set_categories(cats)
     chart1.shape = 4
     chart1.title = "Alternating_Block_Method - Hyetograph"
@@ -270,19 +317,41 @@ with col4:
     chart1.y_axis.title = 'Rainfall (mm)'
     wb['Plot'].add_chart(chart1, "C4")
     
+    openpyxl.chart.legend.Legend(legendEntry=())
+    
     
     wb['Alternating_block'].insert_rows(1)
     # Freeze header
-    wb["Alternating_block"].freeze_panes = "C2"
+    wb["Alternating_block"].freeze_panes = "C3"
     # define printing area
-    wb['Alternating_block'].print_area = "A1:I27"
+    #wb['Alternating_block'].print_area = "A1:I27"
+    
+    #wb['Alternating_block'].insert_cols(1)
+    
+    # Fix the error with the plot 
     
     wb.save('Alternating_block_method_app.xlsx')
       
     # Download excel file     
     with open('Alternating_block_method_app.xlsx', 'rb') as f:
         st.download_button('Download Excel file', f, file_name = 'Altern_block.xlsx',
-                           mime = 'application/vnd.ms-excel')    
+                           mime = 'application/vnd.ms-excel')
+        
+    btn_hydrograph = st.download_button(
+      label="Download Hyetograph Image",
+      data=open('Hydrograph_barplot.png', 'rb').read(),
+      file_name="Hyetograph_Image.png",
+      mime="image/jpeg",
+      )
+    
+    btn_IDF_curves = st.download_button(
+      label="Download IDF_curves Image",
+      data=open('IDF_curves.png', 'rb').read(),
+      file_name="IDF_curves_Image.png",
+      mime="image/jpeg",
+      )
+
+                                                 
     
 # Download image file
 
