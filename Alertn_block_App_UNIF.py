@@ -124,7 +124,7 @@ with col3:
     
     st.write('Station Map')
     fig_map = px.scatter_mapbox(stations_shp_4326, lon='x_wgs84', lat='y_wgs84',
-                    color='selection', hover_name='Name', hover_data=["Name"], size='size',
+                    color='selection', hover_name='Id', hover_data=["Name"], size='size',
                             center=center_dict, zoom=7, height=500)
 
     fig_map.update_layout(mapbox_style="open-street-map",
