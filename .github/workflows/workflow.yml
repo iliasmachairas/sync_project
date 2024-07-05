@@ -1,0 +1,32 @@
+name: Sync Repos
+
+on:
+  push:
+    branches:
+      - main
+  # You can add more triggers, such as scheduled events
+  # schedule:
+  #   - cron: '0 0 * * *'
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source repository
+        uses: actions/checkout@v2
+
+      - name: Push to destination repository
+        run: |
+          git config --global user.email "iliasmachairas@outlook.com"
+          git config --global user.name "iliasmachairas"
+          git clone https://${{ secrets.PAT }}@github.com/iliasmachairas/sync_project.git
+          cd sync_project
+          git remote add ${{ env.ORIGINAL_REPO_NAME }} https://${{ secrets.PAT }}@github.com/${{ env.ORG_NAME }}/${{ env.ORIGINAL_REPO_NAME }}.git
+          git remote update
+          git merge ${{ env.ORIGINAL_REPO_NAME }}/main
+          git push origin main
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT }}
+          ORIGINAL_REPO_NAME: ${{ github.event.repository.name }}
+          ORG_NAME: iliasmachairas
