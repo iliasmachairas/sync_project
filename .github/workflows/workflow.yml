@@ -30,7 +30,8 @@ jobs:
           git checkout main
           
           git rm -f .github/workflows/workflow.yml || true
-          
+          git commit -m "Remove workflow file from sync"
+
           git checkout main
           git merge temp-branch --allow-unrelated-histories
           git push origin main
