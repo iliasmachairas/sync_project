@@ -31,7 +31,7 @@ jobs:
           git checkout -b temp-branch source/main
           git checkout main
           
-          git ls-files --exclude='main.py' 
+          git restore main.py 
           
           git merge temp-branch --allow-unrelated-histories
           git push origin main
