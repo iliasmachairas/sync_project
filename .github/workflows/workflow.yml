@@ -1,3 +1,4 @@
+
 name: Sync Repos
 
 on:
@@ -18,7 +19,6 @@ jobs:
           git config --global user.email "iliasmachairas@outlook.com"
           git config --global user.name "iliasmachairas"
           git config --global credential.helper store
-
       - name: Clone destination repository
         run: |
           echo "https://${{ secrets.PAT }}@github.com" > ~/.git-credentials
@@ -27,20 +27,8 @@ jobs:
           git remote add source https://${{ secrets.PAT }}@github.com/${{ github.repository }}.git
           git fetch source
           git checkout -b temp-branch source/main
-          
-          git rm -f .github/workflows/workflow.yml || true
-          git commit -m "Remove workflow file from sync"
-
           git checkout main
-
-          # Merge temp-branch into main, with strategy to favor changes from temp-branch
-          git merge temp-branch -X theirs --allow-unrelated-histories
-
-          # Handle merge conflicts
-          git checkout --ours .github/workflows/workflow.yml  # keep changes from main branch
-          git add .github/workflows/workflow.yml
-          git merge --continue
-
+          git merge temp-branch --allow-unrelated-histories
           git push origin main
         env:
           GITHUB_TOKEN: ${{ secrets.PAT }}
