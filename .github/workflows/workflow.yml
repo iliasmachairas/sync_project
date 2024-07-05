@@ -26,7 +26,7 @@ jobs:
           git fetch source
           git checkout -b temp-branch source/main
           git checkout main
-          git merge temp-branch
+          git merge temp-branch --allow-unrelated-histories
           git push origin main
         env:
           GITHUB_TOKEN: ${{ secrets.PAT }}
