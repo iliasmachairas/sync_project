@@ -17,9 +17,11 @@ jobs:
         run: |
           git config --global user.email "iliasmachairas@outlook.com"
           git config --global user.name "iliasmachairas"
+          git config --global credential.helper store
 
       - name: Clone destination repository
         run: |
+          echo "https://${{ secrets.PAT }}@github.com" > ~/.git-credentials
           git clone https://${{ secrets.PAT }}@github.com/iliasmachairas/sync_project.git
           cd sync_project
           git remote add source https://${{ secrets.PAT }}@github.com/${{ github.repository }}.git
