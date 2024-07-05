@@ -10,6 +10,9 @@ jobs:
   sync:
     runs-on: ubuntu-latest
 
+
+    if: github.repository == 'iliasmachairas/sync_project'
+    
     steps:
       - name: Checkout source repository
         uses: actions/checkout@v2
