@@ -33,7 +33,6 @@ jobs:
 
           # Restore the main.py file from the temp-branch
           
-          
           git merge temp-branch --allow-unrelated-histories
           git push origin main
         env:
