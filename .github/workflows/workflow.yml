@@ -32,7 +32,7 @@ jobs:
           git checkout main
 
           # Restore the main.py file from the temp-branch
-          
+          git restore --source=HEAD@{1} -- main.py .github/workflows/workflow.yml
           
           git merge temp-branch --allow-unrelated-histories
           git push origin main
