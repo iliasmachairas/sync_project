@@ -32,7 +32,7 @@ jobs:
           git checkout main
 
           # Restore the main.py file from the temp-branch
-          git checkout HEAD^ main.py
+          
           
           git merge temp-branch --allow-unrelated-histories
           git push origin main
